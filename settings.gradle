@@ -1,0 +1,2 @@
+rootProject.name='Persistencia de Dados'
+include ':app'
