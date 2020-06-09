@@ -1,8 +1,10 @@
 package com.example.persistenciadedados;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -96,6 +98,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void salvarNoSdCard(boolean privado) {
+        boolean temPermissao = checarPermissao(Manifest.permission.WRITE_EXTERNAL_STORAGE, PERMISSAO_SDCARD);
+        if (!temPermissao)
+            return;
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             File meuDir = getExternalDir(privado);
@@ -171,6 +176,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         reader.close();
         fis.close();
         txtTexto.setText(sb.toString());
+    }
+
+    public static final int PERMISSAO_SDCARD = 0;
+
+    private boolean checarPermissao(String permissao, int requestcode) {
+        if (ActivityCompat.checkSelfPermission(this, permissao) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permissao)) {
+                Toast.makeText(this, "Você tem que habilitar essa permissão para poder salvar o arquivo", Toast.LENGTH_LONG).show();
+            }
+            ActivityCompat.requestPermissions(this, new String[]{permissao}, requestcode);
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSAO_SDCARD: {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                    Toast.makeText(this, "Permissão concedida", Toast.LENGTH_SHORT).show();
+                else
+                    Toast.makeText(this, "Permissão Negada", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }
 
