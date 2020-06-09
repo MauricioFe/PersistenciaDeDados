@@ -4,14 +4,17 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -56,10 +59,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             switch (tipo) {
                 case R.id.rbtInterna:
+                    salvarInterno();
                     break;
                 case R.id.rbtExterna_privado:
+                    salvarNoSdCard(true);
                     break;
                 case R.id.rbtExterna_publica:
+                    salvarNoSdCard(false);
                     break;
             }
         }
@@ -69,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         try {
             FileOutputStream fos = openFileOutput("arquivo.txt", Context.MODE_PRIVATE);
             salvar(fos);
+            Toast.makeText(this, "Arquivo salvo com sucesso", Toast.LENGTH_LONG).show();
         } catch (IOException e) {
             e.printStackTrace();
             Log.i("NGVL", "salvarInterno: Erro ao salvar o arquivo", e);
@@ -85,6 +92,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void salvarNoSdCard(boolean privado) {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File meuDir = getExternalDir(privado);
+            try {
+                if (!meuDir.exists()) {
+                    meuDir.mkdir();
+                }
+                File arquivoTxt = new File(meuDir, "arquivo.txt");
+                if (!arquivoTxt.exists()) {
+                    arquivoTxt.createNewFile();
+                }
+                FileOutputStream fos = new FileOutputStream(arquivoTxt);
+                salvar(fos);
+            } catch (IOException e) {
+                Log.d("NGVL", "Erro ao salvar arquivo", e);
+            }
+        } else {
+            Log.e("NGVL", "Não é possível escrever no SD Card");
+        }
+    }
+
+    private File getExternalDir(boolean privado) {
+        if (privado) {
+            return getExternalFilesDir(null);
+        }
+        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
     }
 
     private void carregarDoSdCard(boolean privado) {
