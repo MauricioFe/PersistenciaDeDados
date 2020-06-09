@@ -1,8 +1,11 @@
 package com.example.persistenciadedados;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.TextUtils;
@@ -52,8 +55,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     carregarInterno();
                     break;
                 case R.id.rbtExterna_privado:
+                    carregarDoSdCard(true);
                     break;
                 case R.id.rbtExterna_publica:
+                    carregarDoSdCard(false);
                     break;
             }
         } else {
@@ -75,7 +80,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         try {
             FileOutputStream fos = openFileOutput("arquivo.txt", Context.MODE_PRIVATE);
             salvar(fos);
-            Toast.makeText(this, "Arquivo salvo com sucesso", Toast.LENGTH_LONG).show();
         } catch (IOException e) {
             e.printStackTrace();
             Log.i("NGVL", "salvarInterno: Erro ao salvar o arquivo", e);
@@ -113,6 +117,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
     private File getExternalDir(boolean privado) {
         if (privado) {
             return getExternalFilesDir(null);
@@ -121,6 +126,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void carregarDoSdCard(boolean privado) {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            File meuDir = getExternalDir(privado);
+            if (meuDir.exists()) {
+                File arquivoTxt = new File(meuDir, "arquivo.txt");
+                if (arquivoTxt.exists()) {
+                    try {
+                        arquivoTxt.createNewFile();
+                        FileInputStream fis = new FileInputStream(arquivoTxt);
+                        carregar(fis);
+                    } catch (IOException e) {
+                        Log.d("NGLV", "Erro ao carregar arquivo", e);
+                    }
+                }
+            }
+        }
     }
 
     private void salvar(FileOutputStream fos) throws IOException {
@@ -134,6 +155,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         writter.flush();
         writter.close();
         fos.close();
+        Toast.makeText(this, "Arquivo salvo com sucesso", Toast.LENGTH_LONG).show();
     }
 
     private void carregar(FileInputStream fis) throws IOException {
@@ -151,3 +173,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         txtTexto.setText(sb.toString());
     }
 }
+
+
